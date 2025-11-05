@@ -1,0 +1,549 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8" />
+
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<title>Vocab Quest — Quick Game</title>
+
+<style>
+
+:root
+{
+    --bg:#0f1724; 
+    --card:#0b1220; 
+    --accent:#7dd3fc; 
+    --good:#10b981; 
+    --bad:#ef4444;
+    --muted:#94a3b8; 
+    font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;
+}
+
+body
+{
+    margin:0;
+    background:linear-gradient(180deg,#071025 0%, #071827 100%);
+    color:#e6eef7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+}
+
+.app
+{
+    width:980px;
+    max-width:96%;
+    background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
+    border:1px solid rgba(255,255,255,0.04);
+    box-shadow:0 10px 30px rgba(2,6,23,0.7);
+    padding:24px;
+    border-radius:12px;
+}
+
+header
+{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+}
+
+h1
+{
+    font-size:20px;
+    margin:0;
+    color:var(--accent);
+}
+
+.meta
+{
+    color:var(--muted);
+    font-size:13px;
+}
+
+main
+{
+    display:grid;
+    grid-template-columns:1fr 280px;
+    gap:18px;
+}
+
+.card
+{
+    background:var(--card);
+    border-radius:10px;
+    padding:18px;
+}
+
+.sentence
+{
+    font-size:18px;
+    line-height:1.4;
+    margin-bottom:14px;
+}
+
+.blank
+{
+    color:var(--accent);
+    font-weight:600;
+}
+
+.choices
+{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+button.choice
+{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border:1px solid rgba(255,255,255,0.03);
+    padding:10px;
+    border-radius:8px;
+    color:inherit;
+    cursor:pointer;
+}
+
+button.choice:hover
+{
+    transform:translateY(-3px);
+    transition:transform .12s;
+}
+
+.status
+{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:12px;
+    color:var(--muted);
+    font-size:13px;
+}
+
+.right
+{
+    color:var(--good);
+}
+
+.wrong
+{
+    color:var(--bad);
+}
+
+.sidebar
+{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.score
+{
+    font-size:26px;
+    color:var(--accent);
+    text-align:center;
+    padding:12px;
+    border-radius:8px;
+}
+
+.info
+{
+    font-size:13px;
+    color:var(--muted);
+    padding:10px;
+    border-radius:8px;
+}
+
+.controls
+{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+}
+
+button.small
+{
+    padding:8px 10px;
+    border-radius:8px;
+    border:0;
+    cursor:pointer;
+    background:#111827;
+    color:#e6eef7;
+}
+
+.definition
+{
+    margin-top:12px;
+    padding:10px;
+    border-radius:8px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.013), transparent);
+    font-size:14px;
+    color:var(--muted);
+}
+
+footer
+{
+    margin-top:12px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+}
+
+.badge
+{
+    display:inline-block;
+    background:rgba(125,211,252,0.08);
+    color:var(--accent);
+    padding:4px 8px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:12px;
+}
+
+.hint
+{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:8px;
+}
+
+.explain
+{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+}
+
+.correct-anim
+{
+    animation:pop .28s ease;
+}
+
+@keyframes pop
+{
+    0%{transform:scale(.98);}
+    50%{transform:scale(1.06);}
+    100%{transform:scale(1);}
+}
+
+.small-muted
+{
+    font-size:12px;
+    color:var(--muted);
+}
+
+.hidden
+{
+    display:none;
+}
+
+@media (max-width:880px)
+{
+    main{grid-template-columns:1fr;}
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app" role="application" aria-label="Vocab Quest game">
+
+<header>
+
+<div>
+
+<h1>Vocab Quest</h1>
+
+<div class="meta">Pick the correct vocab word to fill the blank — 20 questions total.</div>
+
+</div>
+
+<div class="meta">Practice</div>
+
+</header>
+
+<main>
+
+<section class="card" id="game">
+
+<div class="sentence" id="sentence">Loading...</div>
+
+<div class="choices" id="choices"></div>
+
+<div class="status">
+
+<div class="small-muted">Question <span id="qnum">0</span> / 20</div>
+
+<div><span id="streak">Streak: 0</span></div>
+
+</div>
+
+<div class="definition hidden" id="definition"></div>
+
+<div style="display:flex;gap:8px;margin-top:12px;justify-content:center">
+
+<button class="small" id="hintBtn">Show hint</button>
+
+<button class="small" id="nextBtn" disabled>Next →</button>
+
+<button class="small" id="restartBtn">Restart</button>
+
+</div>
+
+<div class="explain" id="explain"></div>
+
+</section>
+
+<aside class="sidebar">
+
+<div class="card score" id="score">0 pts</div>
+
+<div class="card info">
+
+<div class="small-muted">Current streak</div>
+
+<div id="streakBox" class="badge">0</div>
+
+<hr style="border:none;height:1px;background:rgba(255,255,255,0.02);margin:8px 0">
+
+<div class="small-muted">Correct answers unlock short tips and examples.</div>
+
+</div>
+
+<div class="card info" id="usedWords">
+
+<div class="small-muted">Words used so far</div>
+
+<div id="usedList" style="margin-top:8px;font-size:13px;color:var(--muted)">—</div>
+
+</div>
+
+</aside>
+
+</main>
+
+<footer>
+
+Tip: use the hint if you’re stuck. Definitions show after each answer.
+
+</footer>
+
+</div>
+
+<script>
+
+const questions =
+[
+    {word:"Ambiguity", sentence:"The sentence had more than one meaning — it suffered from ___.", def:"More than one possible meaning; unclear."},
+    {word:"Aphorism", sentence:"'If it ain't broke, don't fix it' is an ___.", def:"A short, memorable saying that states a general truth."},
+    {word:"Anadiplosis", sentence:"She said 'Fear leads to anger. Anger leads to hate.' That repetition is ___.", def:"Repeating the last word of a clause at the start of the next."},
+    {word:"Anaphora", sentence:"The speech opened many lines with 'We will…' — an example of ___.", def:"Repeating the same word or phrase at the beginning of successive clauses."},
+    {word:"Anecdote", sentence:"He told a quick personal story to make his point — a short ___.", def:"A brief, personal story used to illustrate a point."},
+    {word:"Antecedent", sentence:"In 'Sally left because she was tired,' 'Sally' is the ___.", def:"The noun that a pronoun refers back to."},
+    {word:"Colloquialism", sentence:"Using 'gonna' instead of 'going to' is a ___.", def:"Informal or regional language."},
+    {word:"Conceit", sentence:"The poem uses an odd comparison — a bold, elaborate extended metaphor called a ___.", def:"An elaborate or fanciful extended metaphor."},
+    {word:"Connotation", sentence:"'Home' has a warm emotional feel beyond its literal meaning — that's its ___.", def:"The emotional or implied meaning of a word."},
+    {word:"Denotation", sentence:"The ___ of 'rose' is a type of flower — the literal dictionary meaning.", def:"The direct, literal meaning of a word."},
+    {word:"Skeptical", sentence:"When claims seem too good to be true, it's smart to stay ___.", def:"Doubting or questioning the truth of something."},
+    {word:"Spurious", sentence:"The article spread false facts and gave a ___ impression of accuracy.", def:"False or not genuine."},
+    {word:"Strident", sentence:"Her voice was loud and harsh in tone — she spoke in a ___ way.", def:"Loud, harsh, or forceful in sound or tone."},
+    {word:"Surmount", sentence:"With practice you can ___ small obstacles and keep going.", def:"To overcome a difficulty or obstacle."},
+    {word:"Sycophant", sentence:"He praised his boss nonstop and seemed like a ___ rather than a friend.", def:"Someone who flatters to gain favor; a yes-person."},
+    {word:"Tirade", sentence:"After the mistake he launched into a long angry ___.", def:"A long, angry speech or rant."},
+    {word:"Transcendent", sentence:"The music felt so powerful it was almost ___, beyond everyday experience.", def:"Beyond normal limits; extraordinary."},
+    {word:"Vilify", sentence:"The article tried to ___ the singer by spreading rumors.", def:"To speak badly about someone; to slander."},
+    {word:"Virulent", sentence:"The critic's comments were bitter and ___, full of hostile attack.", def:"Extremely harmful or hostile; bitterly toxic."},
+    {word:"Whimsical", sentence:"The small cafe had a ___ decor with playful, odd trinkets.", def:"Playful, fanciful, or quirky in a light way."}
+];
+
+const distractors =
+[
+    "ambiguous","literal","flatterer","rhetoric","ironical","pure","odd","bold","harsh","story","doubtful","fake","poisonous","dreamy","phrase","metaphor","insincere","remark","repeat","region"
+];
+
+function shuffle(a)
+{
+    for(let i=a.length-1;i>0;i--)
+    {
+        const j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+    }
+
+    return a;
+}
+
+let order = shuffle([...Array(questions.length).keys()]);
+
+let idx = 0;
+
+let score = 0;
+
+let streak = 0;
+
+const total = questions.length;
+
+const used = new Set();
+
+const sentenceEl = document.getElementById('sentence');
+
+const choicesEl = document.getElementById('choices');
+
+const qnumEl = document.getElementById('qnum');
+
+const scoreEl = document.getElementById('score');
+
+const streakEl = document.getElementById('streak');
+
+const streakBox = document.getElementById('streakBox');
+
+const definitionEl = document.getElementById('definition');
+
+const usedList = document.getElementById('usedList');
+
+const hintBtn = document.getElementById('hintBtn');
+
+const nextBtn = document.getElementById('nextBtn');
+
+const restartBtn = document.getElementById('restartBtn');
+
+const explainEl = document.getElementById('explain');
+
+const qCountEl = document.getElementById('qnum');
+
+function renderQuestion()
+{
+    definitionEl.classList.add('hidden');
+    definitionEl.innerHTML = '';
+    explainEl.textContent = '';
+    nextBtn.disabled = true;
+    hintBtn.disabled = false;
+
+    if(idx >= total)
+    {
+        sentenceEl.innerHTML = `<strong>All done!</strong> You scored ${score} points.`;
+        choicesEl.innerHTML = '';
+        qnumEl.textContent = total;
+        explainEl.innerHTML = `<div class="small-muted">Words used: ${[...used].join(', ')}</div>`;
+        return;
+    }
+
+    const qIndex = order[idx];
+
+    const q = questions[qIndex];
+
+    qnumEl.textContent = idx+1;
+
+    const s = q.sentence.replace('___', '<span class="blank">______</span>');
+
+    sentenceEl.innerHTML = s;
+
+    const pool = new Set();
+
+    pool.add(q.word);
+
+    while(pool.size < 4)
+    {
+        const pick = questions[Math.floor(Math.random()*questions.length)].word;
+        if(pick !== q.word) pool.add(pick);
+    }
+
+    const choiceArray = shuffle([...pool]);
+
+    choicesEl.innerHTML = '';
+
+    choiceArray.forEach(c=>
+    {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = c;
+        btn.addEventListener('click', ()=> handleChoice(btn, c, q));
+        choicesEl.appendChild(btn);
+    });
+
+    usedList.textContent = [...used].slice(0,6).join(', ') || '—';
+
+    scoreEl.textContent = `${score} pts`;
+
+    streakBox.textContent = streak;
+}
+
+function handleChoice(btn, choice, q)
+{
+    Array.from(choicesEl.children).forEach(b=>b.disabled=true);
+
+    hintBtn.disabled = true;
+
+    const correct = (choice === q.word);
+
+    if(correct)
+    {
+        btn.style.borderColor = 'rgba(16,185,129,0.2)';
+        btn.classList.add('correct-anim');
+        score += 10 + Math.min(50, streak*2);
+        streak += 1;
+        used.add(q.word);
+        definitionEl.classList.remove('hidden');
+        definitionEl.innerHTML = `<strong>${q.word}</strong>: ${q.def}`;
+        explainEl.innerHTML = `<div class="right">Correct! +${10 + Math.min(50, (streak-1)*2)} pts</div>`;
+    }
+
+    else
+    {
+        btn.style.borderColor = 'rgba(239,68,68,0.2)';
+        streak = 0;
+        definitionEl.classList.remove('hidden');
+        definitionEl.innerHTML = `<strong>${q.word}</strong>: ${q.def}`;
+        explainEl.innerHTML = `<div class="wrong">Wrong — the right answer was <strong>${q.word}</strong>.</div>`;
+    }
+
+    scoreEl.textContent = `${score} pts`;
+    streakBox.textContent = streak;
+    nextBtn.disabled = false;
+}
+
+hintBtn.addEventListener('click', ()=>
+{
+    const qIndex = order[idx];
+    const q = questions[qIndex];
+    definitionEl.classList.remove('hidden');
+    definitionEl.innerHTML = `<strong>Hint — definition</strong>: ${q.def}`;
+    hintBtn.disabled = true;
+});
+
+nextBtn.addEventListener('click', ()=>
+{
+    idx++;
+    if(idx < total)
+    {
+        renderQuestion();
+    }
+    else
+    {
+        renderQuestion();
+    }
+});
+
+restartBtn.addEventListener('click', ()=>
+{
+    order = shuffle([...Array(questions.length).keys()]);
+    idx = 0; score = 0; streak = 0; used.clear();
+    definitionEl.classList.add('hidden');
+    nextBtn.disabled = true;
+    renderQuestion();
+});
+
+renderQuestion();
+
+</script>
+
+</body>
+
+</html>
